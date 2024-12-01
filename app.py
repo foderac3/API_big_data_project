@@ -4,24 +4,24 @@ from pymongo import MongoClient
 import logging
 from datetime import datetime
 
-# Configuration de Flask et MongoDB
+# Configuring Flask and MongoDB
 app = Flask(__name__)
 api = Api(app)
 
-# Connexion à MongoDB
+# Connecting to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
 db = client["API_bigdata"]
 collection = db["bigdata"]
 audit_collection = db["audit_logs"]
 
-# Configuration de la journalisation
+# Logging configuration
 logging.basicConfig(
     filename="api.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
-# Fonction pour enregistrer les actions dans une collection d'audit
+# Function for recording actions in an audit collection
 def log_action(action, siret):
     audit_collection.insert_one({
         "action": action,
@@ -31,10 +31,10 @@ def log_action(action, siret):
 
 # Endpoints CRUD
 class SiretResource(Resource):
-    # Récupérer un enregistrement par SIRET
+    # Retrieve a record by SIRET
     def get(self, siret_id):
         try:
-            # Convertir siret_id en entier pour la recherche dans MongoDB
+            # Convert siret_id to integer for MongoDB search
             siret_id = int(siret_id)
         except ValueError:
             logging.warning(f"Le SIRET fourni n'est pas un entier valide : {siret_id}")
@@ -50,11 +50,11 @@ class SiretResource(Resource):
             logging.warning(f"SIRET non trouvé : {siret_id}")
             return {"message": "SIRET non trouvé"}, 404
 
-        record["_id"] = str(record["_id"])  # Convertir ObjectId en chaîne
+        record["_id"] = str(record["_id"])  # Convert ObjectId to string
         return jsonify(record)
 
 class SiretCreate(Resource):
-    # Ajouter un nouvel enregistrement
+    # Add a new record
     def post(self):
         data = request.json
         logging.info(f"Requête POST avec données : {data}")
@@ -69,10 +69,10 @@ class SiretCreate(Resource):
         return {"message": "Enregistrement ajouté avec succès"}, 201
 
 class SiretUpdate(Resource):
-    # Mettre à jour un enregistrement
+    # Update a record
     def put(self, siret_id):
         try:
-            # Convertir siret_id en entier pour la recherche dans MongoDB
+            # Convert siret_id to integer for MongoDB search
             siret_id = int(siret_id)
         except ValueError:
             logging.warning(f"Le SIRET fourni n'est pas un entier valide : {siret_id}")
@@ -91,10 +91,10 @@ class SiretUpdate(Resource):
         return {"message": "Enregistrement mis à jour avec succès"}, 200
 
 class SiretDelete(Resource):
-    # Supprimer un enregistrement
+    # Delete a recording
     def delete(self, siret_id):
         try:
-            # Convertir siret_id en entier pour la recherche dans MongoDB
+            # Convert siret_id to integer for MongoDB search
             siret_id = int(siret_id)
         except ValueError:
             logging.warning(f"Le SIRET fourni n'est pas un entier valide : {siret_id}")
@@ -111,25 +111,25 @@ class SiretDelete(Resource):
         logging.info(f"SIRET supprimé avec succès : {siret_id}")
         return {"message": "Enregistrement supprimé avec succès"}, 200
 
-# Ajouter les ressources à l'API
+# Add resources to the API
 api.add_resource(SiretResource, "/siret/<string:siret_id>")
 api.add_resource(SiretCreate, "/siret")
 api.add_resource(SiretUpdate, "/siret/<string:siret_id>")
 api.add_resource(SiretDelete, "/siret/<string:siret_id>")
 
-# Endpoint pour récupérer tous les enregistrements (facultatif)
+# Endpoint to retrieve all recordings
 @app.route("/siret", methods=["GET"])
 def get_all_siret():
     logging.info("Requête GET pour récupérer tous les enregistrements.")
     records = list(collection.find())
     for record in records:
-        record["_id"] = str(record["_id"])  # Convertir ObjectId en chaîne
+        record["_id"] = str(record["_id"])  # Convert ObjectId to string
     return jsonify(records)
 
-# Vérification des routes disponibles
+# Check available routes
 print("Routes disponibles :")
 print(app.url_map)
 
-# Lancer l'application Flask
+# Launch the Flask app
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
